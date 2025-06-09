@@ -17,13 +17,12 @@ import Modal from 'react-native-modal';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowBanner: true,     // replaces shouldShowAlert
-    shouldShowList: true,       // shows in notification center
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
-
 
 export default function App() {
   const [taskText, setTaskText] = useState('');
@@ -33,13 +32,30 @@ export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [reminderTime, setReminderTime] = useState(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [notificationTask, setNotificationTask] = useState(null);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+
   const notificationIds = useRef({});
 
   useEffect(() => {
     registerForPushNotificationsAsync();
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      Alert.alert('Notification Clicked', JSON.stringify(response));
+      const data = response.notification.request.content.data;
+      const foundTask = tasks.find(task => task.id === data.taskId);
+      if (foundTask) {
+        setNotificationTask({
+          name: foundTask.text,
+          time: reminderTime,
+          summary: foundTask.description,
+          status: foundTask.completed ? 'Completed' : 'Pending',
+        });
+        setShowNotificationModal(true);
+      }
+    });
+
+    const receivedListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
     });
 
     if (Platform.OS === 'android') {
@@ -53,8 +69,9 @@ export default function App() {
 
     return () => {
       responseListener.remove();
+      receivedListener.remove();
     };
-  }, []);
+  }, [tasks, reminderTime]);
 
   async function registerForPushNotificationsAsync() {
     if (Constants.isDevice) {
@@ -86,14 +103,23 @@ export default function App() {
 
   const toggleComplete = (id) => {
     setTasks((prev) => {
-      const updated = prev.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      );
+      const updated = prev.map((task) => {
+        const updatedTask = task.id === id ? { ...task, completed: !task.completed } : task;
+  
+        if (updatedTask.completed && notificationIds.current[updatedTask.id]) {
+          Notifications.cancelScheduledNotificationAsync(notificationIds.current[updatedTask.id]);
+          delete notificationIds.current[updatedTask.id];
+          console.log(`Cancelled notification for task ${updatedTask.text}`);
+        }
+  
+        return updatedTask;
+      });
+  
       const sorted = updated.sort((a, b) => a.completed - b.completed);
       return sorted;
     });
   };
-
+  
   const deleteTask = (id) => {
     Alert.alert('Delete Task', 'Are you sure you want to delete this task?', [
       { text: 'Cancel', style: 'cancel' },
@@ -119,48 +145,80 @@ export default function App() {
       t.id === selectedTask.id ? { ...t, description } : t
     );
     setTasks(updatedTasks);
-
+  
     if (reminderTime) {
+      const taskId = selectedTask.id;
+      const taskName = selectedTask.text;
+  
+      // ✅ Prevent reminder for completed tasks
+      if (selectedTask.completed) {
+        Alert.alert("Reminder not set", "Cannot set a reminder for a completed task.");
+        setShowModal(false);
+        return; // ⛔ stop here if completed
+      }
+  
       const now = new Date();
-      const triggerDate = new Date(now);
+      const triggerDate = new Date();
       triggerDate.setHours(reminderTime.getHours());
       triggerDate.setMinutes(reminderTime.getMinutes());
       triggerDate.setSeconds(0);
-      if (triggerDate < now) triggerDate.setDate(triggerDate.getDate() + 1);
-
-      await Notifications.scheduleNotificationAsync({
+  
+      const timeDiff = triggerDate.getTime() - now.getTime();
+  
+      const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Reminder',
-          body: 'Task Description',
+          title: 'Task Reminder',
+          body: `Don't forget to complete: ${taskName}`,
           sound: true,
           channelId: 'default',
+          data: { taskId, taskName },
         },
-        trigger: {
-          type: 'date',
-          date: new Date('2025-06-09T09:46:00+05:30')
-        },
+        trigger: timeDiff <= 1000 ? { seconds: 2 } : triggerDate,
       });
-      
+  
+      // ✅ Save notificationId to cancel if task is completed later
+      notificationIds.current[taskId] = notificationId;
     }
-
+  
     setShowModal(false);
+  };
+  
+  
+  const handleTestNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Test Notification',
+        body: 'This is a test notification from your app!',
+        sound: true,
+      },
+      trigger: { seconds: 2 },
+    });
+    console.log('Test notification scheduled');
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleTaskPress(item)} style={styles.taskItem}>
+    <View style={styles.taskItem}>
       <TouchableOpacity onPress={() => toggleComplete(item.id)} style={styles.checkbox}>
         <Text style={{ fontSize: 18 }}>{item.completed ? '✔' : '○'}</Text>
       </TouchableOpacity>
-      <Text
-        style={[styles.taskText, { textDecorationLine: item.completed ? 'line-through' : 'none' }]}
-      >
-        {item.text}
-      </Text>
+      
+      <TouchableOpacity onPress={() => handleTaskPress(item)} style={{ flex: 1 }}>
+        <Text
+          style={[
+            styles.taskText,
+            { textDecorationLine: item.completed ? 'line-through' : 'none' },
+          ]}
+        >
+          {item.text}
+        </Text>
+      </TouchableOpacity>
+  
       <TouchableOpacity onPress={() => deleteTask(item.id)} style={styles.deleteButton}>
         <Text style={{ color: 'white' }}>Delete</Text>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </View>
   );
+  
 
   return (
     <View style={styles.container}>
@@ -174,6 +232,7 @@ export default function App() {
         />
         <Button title="Add" onPress={addTask} />
       </View>
+
       <FlatList
         data={tasks}
         renderItem={renderItem}
@@ -181,6 +240,11 @@ export default function App() {
         style={{ width: '100%' }}
       />
 
+      <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>
+        <Text style={styles.buttonText}>Test Notification</Text>
+      </TouchableOpacity>
+
+      {/* Edit Task Modal */}
       <Modal isVisible={showModal} onBackdropPress={() => setShowModal(false)}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{selectedTask?.text}</Text>
@@ -191,13 +255,20 @@ export default function App() {
             value={description}
             onChangeText={setDescription}
           />
-          <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.timeButton}>
-            <Text style={styles.timeText}>
-              {reminderTime
-                ? `Reminder: ${reminderTime.getHours()}:${reminderTime.getMinutes()}`
-                : 'Set Reminder Time'}
-            </Text>
+         <TouchableOpacity
+          onPress={() => !selectedTask?.completed && setShowTimePicker(true)}
+          style={[styles.timeButton, selectedTask?.completed && { backgroundColor: '#ccc' }]}
+          disabled={selectedTask?.completed}
+            >
+          <Text style={styles.timeText}>
+          {reminderTime
+          ? `Reminder: ${reminderTime.getHours()}:${reminderTime.getMinutes()}`
+          : selectedTask?.completed
+          ? 'Completed Task - No Reminder'
+          : 'Set Reminder Time'}
+          </Text>
           </TouchableOpacity>
+
           {showTimePicker && (
             <DateTimePicker
               mode="time"
@@ -210,6 +281,23 @@ export default function App() {
           )}
           <TouchableOpacity onPress={handleSaveDetails} style={styles.saveButton}>
             <Text style={styles.buttonText}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Notification Modal */}
+      <Modal isVisible={showNotificationModal} onBackdropPress={() => setShowNotificationModal(false)}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>🔔 Task Notification</Text>
+          <Text><Text style={{ fontWeight: 'bold' }}>Task:</Text> {notificationTask?.name}</Text>
+          <Text><Text style={{ fontWeight: 'bold' }}>Time:</Text> {reminderTime?.toLocaleTimeString() || 'Not set'}</Text>
+          <Text><Text style={{ fontWeight: 'bold' }}>Summary:</Text> {notificationTask?.summary || 'No description'}</Text>
+          <Text><Text style={{ fontWeight: 'bold' }}>Status:</Text> {notificationTask?.status}</Text>
+          <TouchableOpacity
+            style={[styles.saveButton, { marginTop: 12 }]}
+            onPress={() => setShowNotificationModal(false)}
+          >
+            <Text style={styles.buttonText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -258,10 +346,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flex: 1,
   },
-  completedTask: {
-    textDecorationLine: 'line-through',
-    color: '#999',
-  },
   deleteButton: {
     backgroundColor: '#e74c3c',
     paddingHorizontal: 10,
@@ -307,6 +391,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
+  },
+  testButton: {
+    marginTop: 10,
+    backgroundColor: '#009688',
+    padding: 12,
+    borderRadius: 10,
   },
   buttonText: {
     color: '#fff',
