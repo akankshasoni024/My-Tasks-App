@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // import AsyncStorage
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -24,6 +25,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const STORAGE_KEY = '@tasks'; // key for AsyncStorage
+
 export default function App() {
   const [taskText, setTaskText] = useState('');
   const [tasks, setTasks] = useState([]);
@@ -36,6 +39,16 @@ export default function App() {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   const notificationIds = useRef({});
+
+  // Load tasks from AsyncStorage on mount
+  useEffect(() => {
+    loadTasksFromStorage();
+  }, []);
+
+  // Save tasks to AsyncStorage whenever they change
+  useEffect(() => {
+    saveTasksToStorage(tasks);
+  }, [tasks]);
 
   useEffect(() => {
     registerForPushNotificationsAsync();
@@ -73,6 +86,26 @@ export default function App() {
     };
   }, [tasks, reminderTime]);
 
+  // AsyncStorage helpers
+  const loadTasksFromStorage = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem(STORAGE_KEY);
+      if (storedTasks !== null) {
+        setTasks(JSON.parse(storedTasks));
+      }
+    } catch (e) {
+      console.log('Failed to load tasks.', e);
+    }
+  };
+
+  const saveTasksToStorage = async (tasksToSave) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(tasksToSave));
+    } catch (e) {
+      console.log('Failed to save tasks.', e);
+    }
+  };
+
   async function registerForPushNotificationsAsync() {
     if (Constants.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -105,21 +138,21 @@ export default function App() {
     setTasks((prev) => {
       const updated = prev.map((task) => {
         const updatedTask = task.id === id ? { ...task, completed: !task.completed } : task;
-  
+
         if (updatedTask.completed && notificationIds.current[updatedTask.id]) {
           Notifications.cancelScheduledNotificationAsync(notificationIds.current[updatedTask.id]);
           delete notificationIds.current[updatedTask.id];
           console.log(`Cancelled notification for task ${updatedTask.text}`);
         }
-  
+
         return updatedTask;
       });
-  
+
       const sorted = updated.sort((a, b) => a.completed - b.completed);
       return sorted;
     });
   };
-  
+
   const deleteTask = (id) => {
     Alert.alert('Delete Task', 'Are you sure you want to delete this task?', [
       { text: 'Cancel', style: 'cancel' },
@@ -128,6 +161,10 @@ export default function App() {
         style: 'destructive',
         onPress: () => {
           setTasks((prev) => prev.filter((task) => task.id !== id));
+          if (notificationIds.current[id]) {
+            Notifications.cancelScheduledNotificationAsync(notificationIds.current[id]);
+            delete notificationIds.current[id];
+          }
         },
       },
     ]);
@@ -145,26 +182,26 @@ export default function App() {
       t.id === selectedTask.id ? { ...t, description } : t
     );
     setTasks(updatedTasks);
-  
+
     if (reminderTime) {
       const taskId = selectedTask.id;
       const taskName = selectedTask.text;
-  
-      // ✅ Prevent reminder for completed tasks
+
+      // Prevent reminder for completed tasks
       if (selectedTask.completed) {
         Alert.alert("Reminder not set", "Cannot set a reminder for a completed task.");
         setShowModal(false);
-        return; // ⛔ stop here if completed
+        return;
       }
-  
+
       const now = new Date();
       const triggerDate = new Date();
       triggerDate.setHours(reminderTime.getHours());
       triggerDate.setMinutes(reminderTime.getMinutes());
       triggerDate.setSeconds(0);
-  
+
       const timeDiff = triggerDate.getTime() - now.getTime();
-  
+
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: 'Task Reminder',
@@ -175,15 +212,13 @@ export default function App() {
         },
         trigger: timeDiff <= 1000 ? { seconds: 2 } : triggerDate,
       });
-  
-      // ✅ Save notificationId to cancel if task is completed later
+
       notificationIds.current[taskId] = notificationId;
     }
-  
+
     setShowModal(false);
   };
-  
-  
+
   const handleTestNotification = async () => {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -201,7 +236,7 @@ export default function App() {
       <TouchableOpacity onPress={() => toggleComplete(item.id)} style={styles.checkbox}>
         <Text style={{ fontSize: 18 }}>{item.completed ? '✔' : '○'}</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity onPress={() => handleTaskPress(item)} style={{ flex: 1 }}>
         <Text
           style={[
@@ -212,13 +247,12 @@ export default function App() {
           {item.text}
         </Text>
       </TouchableOpacity>
-  
+
       <TouchableOpacity onPress={() => deleteTask(item.id)} style={styles.deleteButton}>
         <Text style={{ color: 'white' }}>Delete</Text>
       </TouchableOpacity>
     </View>
   );
-  
 
   return (
     <View style={styles.container}>
@@ -255,18 +289,18 @@ export default function App() {
             value={description}
             onChangeText={setDescription}
           />
-         <TouchableOpacity
-          onPress={() => !selectedTask?.completed && setShowTimePicker(true)}
-          style={[styles.timeButton, selectedTask?.completed && { backgroundColor: '#ccc' }]}
-          disabled={selectedTask?.completed}
-            >
-          <Text style={styles.timeText}>
-          {reminderTime
-          ? `Reminder: ${reminderTime.getHours()}:${reminderTime.getMinutes()}`
-          : selectedTask?.completed
-          ? 'Completed Task - No Reminder'
-          : 'Set Reminder Time'}
-          </Text>
+          <TouchableOpacity
+            onPress={() => !selectedTask?.completed && setShowTimePicker(true)}
+            style={[styles.timeButton, selectedTask?.completed && { backgroundColor: '#ccc' }]}
+            disabled={selectedTask?.completed}
+          >
+            <Text style={styles.timeText}>
+              {reminderTime
+                ? `Reminder: ${reminderTime.getHours()}:${reminderTime.getMinutes()}`
+                : selectedTask?.completed
+                ? 'Completed Task - No Reminder'
+                : 'Set Reminder Time'}
+            </Text>
           </TouchableOpacity>
 
           {showTimePicker && (
