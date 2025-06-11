@@ -63,6 +63,8 @@ export default function HomeScreen() {
   const [notificationTask, setNotificationTask] = useState(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [priority, setPriority] = useState('Medium');
+  const [editText, setEditText] = useState('');
+
 
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
@@ -147,7 +149,14 @@ export default function HomeScreen() {
       console.log('Notice', 'Must use a physical device for notifications');
     }
   }
-
+  const sortTasksByPriorityAndCompletion = (taskList) => {
+    const priorityMap = { High: 0, Medium: 1, Low: 2 };
+    return [...taskList].sort((a, b) => {
+      if (a.completed !== b.completed) return a.completed - b.completed;
+      return priorityMap[a.priority] - priorityMap[b.priority];
+    });
+  };
+  
   const addTask = () => {
     if (!taskText.trim()) return;
     const newTask = {
@@ -157,15 +166,8 @@ export default function HomeScreen() {
       description: '',
       priority: 'Medium',
     };
-    setTasks((prev) => {
-      const priorityMap = { High: 0, Medium: 1, Low: 2 };
-      const updated = [newTask, ...prev];
-      updated.sort((a, b) => {
-        if (a.completed !== b.completed) return a.completed - b.completed;
-        return priorityMap[a.priority] - priorityMap[b.priority];
-      });
-      return updated;
-    });
+    setTasks((prev) => sortTasksByPriorityAndCompletion([...prev, newTask]));
+    
     setTaskText('');
   };
   
@@ -217,7 +219,7 @@ export default function HomeScreen() {
     setDescription(task.description || '');
     setReminderTime(null);
     setShowModal(true);
-    setTaskText(task.text); 
+    setEditText(task.text);
     setPriority(task.priority || 'Medium');
 
   };
@@ -225,11 +227,15 @@ export default function HomeScreen() {
   const handleSaveDetails = async () => {
     const updatedTasks = tasks.map((t) =>
       t.id === selectedTask.id
-        ? { ...t, text: taskText.trim(), description, priority }
+        ? { ...t, text: editText.trim(), description, priority }
         : t
     );
     
-    setTasks(updatedTasks);
+    
+    
+    const updatedSorted = sortTasksByPriorityAndCompletion(updatedTasks);
+    setTasks(updatedSorted);
+    
 
     if (reminderTime) {
       const taskId = selectedTask.id;
@@ -265,6 +271,7 @@ export default function HomeScreen() {
     }
 
     setShowModal(false);
+    setTaskText('');
   };
 
   const handleTestNotification = async () => {
@@ -288,7 +295,7 @@ export default function HomeScreen() {
     >
       <View style={styles.taskItem}>
         <TouchableOpacity onPress={() => toggleComplete(item.id)} style={styles.checkbox}>
-          <Text style={{ fontSize: 18 }}>{item.completed ? '✔' : '○'}</Text>
+          <Text style={{ fontSize: 18, color: theme.text, }}>{item.completed ? '✔' : '○'}</Text>
         </TouchableOpacity>
   
         <TouchableOpacity onPress={() => handleTaskPress(item)} style={{ flex: 1 }}>
@@ -302,7 +309,7 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacity>
   
-        <Text style={{ fontSize: 12, color: '#555' }}>
+        <Text style={{ fontSize: 12, color: theme.text,}}>
           {item.priority === 'High' ? '🔴 ' : item.priority === 'Medium' ? '🟡 ' : '🟢 '}
         </Text>
   
@@ -343,7 +350,7 @@ export default function HomeScreen() {
 
 
       {/* Edit Task Modal */}
-      <Modal isVisible={showModal} onBackdropPress={() => setShowModal(false)}>
+      <Modal isVisible={showModal} onBackdropPress={() => {setShowModal(false); setEditText('');}}>
       <Animatable.View animation="zoomIn" duration={300} useNativeDriver>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{selectedTask?.text}</Text>
@@ -354,7 +361,7 @@ export default function HomeScreen() {
             value={description}
             onChangeText={setDescription}
           />
-          <Text style={{ fontWeight: 'bold', marginBottom: 6 }}>Priority</Text>
+          <Text style={{ fontWeight: 'bold', marginBottom: 6,color: theme.text, }}>Priority</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
              {['High', 'Medium', 'Low'].map((level) => (
              <TouchableOpacity

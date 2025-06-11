@@ -1,63 +1,98 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import LottieView from 'lottie-react-native';
 
-const LandingScreen = ({ navigation }) => {
-  const [name, setName] = useState('');
+const WelcomeScreen = ({ navigation }) => {
+  const [loading, setLoading] = useState(true);
 
-  const handleStart = () => {
-    if (name.trim()) {
-      navigation.navigate('Home', { userName: name.trim() });
-    }
+  useEffect(() => {
+    const checkFirstTime = async () => {
+      const hasLaunched = await AsyncStorage.getItem('hasLaunched');
+      if (hasLaunched) {
+        navigation.replace('Home'); // Skip if already seen
+      } else {
+        setLoading(false); // Show welcome screen
+      }
+    };
+    checkFirstTime();
+  }, []);
+
+  const handleStart = async () => {
+    await AsyncStorage.setItem('hasLaunched', 'true');
+    navigation.replace('Home');
   };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to My Tasks</Text>
-      <TextInput
-        placeholder="Enter your name"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
+      <LottieView
+        source={require('../assets/task-animation.json')} // Replace with your Lottie animation
+        autoPlay
+        loop
+        style={{ width: 300, height: 300 }}
       />
-      <TouchableOpacity onPress={handleStart} style={styles.button}>
-        <Text style={styles.buttonText}>Let's Go</Text>
+      <Text style={styles.title}>Welcome to</Text>
+      <Text style={styles.appName}>My Tasks</Text>
+      <Text style={styles.subtitle}>Your smart solution to manage tasks efficiently</Text>
+      <TouchableOpacity style={styles.button} onPress={handleStart}>
+        <Text style={styles.buttonText}>Let's Get Started</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-export default LandingScreen;
+export default WelcomeScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#3EDDFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  centered: {
+    flex: 1,
+    backgroundColor: '#3EDDFF',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#3EDDFF',
   },
   title: {
-    fontSize: 32,
-    color: 'white',
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 26,
+    color: '#fff',
+    marginTop: 20,
+    fontWeight: '500',
   },
-  input: {
-    backgroundColor: 'white',
-    width: '100%',
-    padding: 12,
-    borderRadius: 8,
+  appName: {
+    fontSize: 38,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  subtitle: {
     fontSize: 16,
-    marginBottom: 20,
+    color: '#fff',
+    textAlign: 'center',
+    marginVertical: 20,
+    maxWidth: 280,
   },
   button: {
     backgroundColor: '#222',
-    paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    marginTop: 10,
   },
   buttonText: {
-    color: 'white',
+    color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

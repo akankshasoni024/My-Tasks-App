@@ -1,102 +1,98 @@
 # My Tasks App
 
-This is a beautifully animated and functional **React Native task manager app** Built using Expo development builds, allowing users to manage their tasks efficiently. It supports **dark and light themes**, **local persistence with AsyncStorage**, and **push notifications** for task reminders.
+A beautifully animated and fully functional **React Native Task Manager App** built using **Expo Development Builds**. This app helps users manage their daily tasks with **local persistence**, **reminders**, **animations**, and **push notifications**.
 
-
+>The app includes a one-time **animated welcome screen** shown only on the first launch, giving users a delightful onboarding experience.
 
 ## Features
 
-### Task Management
+### ✅ Task Management
 
-* Add, edit, delete tasks
-* Mark tasks as completed or pending
-* Inline task editing with description and priority settings
-* Animated task entries with `react-native-animatable`
+* Add new tasks with a title, description, and priority
+* Edit tasks inline
+* Mark tasks as **Completed** or **Pending**
+* Delete tasks individually
+* Sort tasks based on:
+  * **Completion status**
+  * **Priority**: High 🔴 > Medium 🟡 > Low 🟢
 
 ### Reminders & Notifications
 
-* Set reminders for tasks using a **time picker**
-* Receive push notifications using **Expo Notifications**
-* Prevent reminders for completed tasks
-* Includes a **test notification button** to verify notification functionality
-* Notification details modal shows:
-
+* Set a **custom reminder time** for any task
+* Receive **push notifications** for reminders using **Expo Notifications**
+* Notifications display:
   * Task name
   * Reminder time
-  * Task summary
+  * Summary
   * Status (Completed/Pending)
+* Reminder is disabled automatically for completed tasks
 
 ### Theme Support
 
-* Dynamic **dark and light mode** support using `useColorScheme`
-* UI adapts based on system theme
+* **Dynamic light and dark mode**
+* Follows system theme automatically
+* Clean and minimal UI adapting to theme in real time
 
 ### Local Data Persistence
 
-* All tasks are saved locally using **AsyncStorage**
-* Tasks persist even after the app is closed
+* Tasks and their states are **stored using AsyncStorage**
+* Your data persists even after app restarts
 
-### Priority Sorting
+### 🎨 Beautiful Animations
 
-* Tasks are sorted based on:
+* Smooth transitions using `react-native-animatable`
+* Animated:
+  * Task list items
+  * Modals
+  * Button interactions
+* Visually pleasing and responsive UI
 
-  * Completion status
-  * Priority (High 🔴 > Medium 🟡 > Low 🟢)
+### Welcome Screen
 
-### Smooth UX
+* **Shown only once** on the first app launch
+* Highlights the app's features with subtle animations
 
-* Modals for editing tasks and viewing notifications
-* Beautiful animations on task rendering, modals, and buttons
+## Tech Stack
+
+| Technology                                 | Purpose                                         |
+| ------------------------------------------ | ----------------------------------------------- |
+| **React Native**                           | Core mobile development                         |
+| **Expo**                                   | Development, builds, and notifications          |
+| **AsyncStorage**                           | Save tasks locally                              |
+| **Expo Notifications**                     | Schedule and send push notifications            |
+| **react-native-modal**                     | Elegant modal overlays                          |
+| **react-native-animatable**                | Smooth animations for UI elements               |
+| **@react-native-community/datetimepicker** | Time picker for reminders                       |
+| **react-navigation**                       | Navigation stack including welcome screen       |
+| **Expo Splash/Icons Config**               | Adaptive splash and app icons for all platforms |
+
+## 🚀 Installation
+
+1. **Clone the repository**
+
+   git clone https://github.com/your-username/my-tasks-app.git
+   cd my-tasks-app
+
+2. **Install dependencies**
+
+   npm install
+
+3. **Run on device**
+
+   npx expo start
+
+   > **Note**⚠️ Notifications **require a physical device** and won’t work on simulators or Expo Go (after SDK 53+).
+   > To test notifications: [Create a development build](https://docs.expo.dev/develop/development-builds/introduction/)
+
+
+## Permissions
+
+* `Notifications`: Required for task reminders
+* Device-only features are disabled on simulators/emulators
 
 ---
 
-## 📸 Screenshots
-
-
-
-## 🛠️ Tech Stack
-
-* **React Native** with **Expo**
-* **AsyncStorage** for data persistence
-* **Expo Notifications** for push notifications
-* **@react-native-community/datetimepicker** for setting reminder time
-* **react-native-modal** for task and notification modals
-* **react-native-animatable** for animations
-* **Platform-based Notification Channels** (for Android)
-
----
-
-## 📲 Installation
-
-1. Clone the repository:
-
-
-git clone https://github.com/your-username/my-tasks-app.git
-cd my-tasks-app
-
-
-2. Install dependencies:
-
-
-npm install
-
-
-3. Run on device:
-
-npx expo start
-
-
-**Note:** Push notifications only work on physical devices, not on emulators or Expo Go (starting SDK 53+). Create a [Development Build]
-(https://docs.expo.dev/develop/development-builds/introduction/) to test notifications.
-
-
-
-## Permissions Required
-
-* **Notifications**: App will prompt the user for notification permissions
-* **Device-only**: Some notification features require a physical device
-
-## Author
+## 👩Author
 
 **Akanksha Soni**
 
