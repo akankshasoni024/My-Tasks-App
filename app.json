@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "my-tasks",
+    "name": "My Tasks",
     "slug": "my-tasks",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,14 +18,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.mytasks"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/icon.png"
     },
     "extra": {
       "eas": {
