@@ -38,7 +38,7 @@ A beautifully animated and fully functional **React Native Task Manager App** bu
 * Tasks and their states are **stored using AsyncStorage**
 * Your data persists even after app restarts
 
-### 🎨 Beautiful Animations
+### Animations
 
 * Smooth transitions using `react-native-animatable`
 * Animated:
@@ -66,7 +66,7 @@ A beautifully animated and fully functional **React Native Task Manager App** bu
 | **react-navigation**                       | Navigation stack including welcome screen       |
 | **Expo Splash/Icons Config**               | Adaptive splash and app icons for all platforms |
 
-## 🚀 Installation
+## Installation
 
 1. **Clone the repository**
 
@@ -81,7 +81,7 @@ A beautifully animated and fully functional **React Native Task Manager App** bu
 
    npx expo start
 
-   > **Note**⚠️ Notifications **require a physical device** and won’t work on simulators or Expo Go (after SDK 53+).
+   > **Note**Notifications **require a physical device** and won’t work on simulators or Expo Go (after SDK 53+).
    > To test notifications: [Create a development build](https://docs.expo.dev/develop/development-builds/introduction/)
 
 
@@ -92,7 +92,7 @@ A beautifully animated and fully functional **React Native Task Manager App** bu
 
 ---
 
-## 👩Author
+## Author
 
 **Akanksha Soni**
 
