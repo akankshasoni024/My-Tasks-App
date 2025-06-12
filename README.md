@@ -6,7 +6,7 @@ A beautifully animated and fully functional **React Native Task Manager App** bu
 
 ## Features
 
-### ✅ Task Management
+### Task Management
 
 * Add new tasks with a title, description, and priority
 * Edit tasks inline
