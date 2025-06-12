@@ -192,7 +192,7 @@ export default function HomeScreen() {
         return priorityMap[a.priority] - priorityMap[b.priority];
       });
   
-      return [...sorted]; // 🟢 THIS IS IMPORTANT
+      return [...sorted]; 
     });
   };
   
@@ -310,7 +310,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
   
         <Text style={{ fontSize: 12, color: theme.text,}}>
-          {item.priority === 'High' ? '🔴 ' : item.priority === 'Medium' ? '🟡 ' : '🟢 '}
+          {item.priority === 'High' ? 'High ' : item.priority === 'Medium' ? 'Medium ' : 'Low '}
         </Text>
   
         <TouchableOpacity onPress={() => deleteTask(item.id)} style={styles.deleteButton}>
