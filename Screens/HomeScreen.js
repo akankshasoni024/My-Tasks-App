@@ -274,17 +274,17 @@ export default function HomeScreen() {
     setTaskText('');
   };
 
-  const handleTestNotification = async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Test Notification',
-        body: 'This is a test notification from your app!',
-        sound: true,
-      },
-      trigger: { seconds: 2 },
-    });
-    console.log('Test notification scheduled');
-  };
+  // const handleTestNotification = async () => {
+  //   await Notifications.scheduleNotificationAsync({
+  //     content: {
+  //       title: 'Test Notification',
+  //       body: 'This is a test notification from your app!',
+  //       sound: true,
+  //     },
+  //     trigger: { seconds: 2 },
+  //   });
+  //   console.log('Test notification scheduled');
+  // };
 
   const renderItem = ({ item, index }) => (
     <Animatable.View
@@ -342,11 +342,11 @@ export default function HomeScreen() {
         style={{ width: '100%' }}
       />
 
-<Animatable.View animation="pulse" iterationCount="infinite" iterationDelay={4000}>
+{/* <Animatable.View animation="pulse" iterationCount="infinite" iterationDelay={4000}>
   <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>
     <Text style={styles.buttonText}>Test Notification</Text>
   </TouchableOpacity>
-</Animatable.View>
+</Animatable.View> */}
 
 
       {/* Edit Task Modal */}
@@ -528,12 +528,12 @@ const createStyles = (theme: typeof lightTheme) =>
       borderRadius: 10,
       alignItems: 'center',
     },
-    testButton: {
-      marginTop: 10,
-      backgroundColor: '#009688',
-      padding: 12,
-      borderRadius: 10,
-    },
+    // testButton: {
+    //   marginTop: 10,
+    //   backgroundColor: '#009688',
+    //   padding: 12,
+    //   borderRadius: 10,
+    // },
     buttonText: {
       color: theme.buttonText,
       fontWeight: 'bold',
